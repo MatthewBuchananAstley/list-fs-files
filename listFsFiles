@@ -1,0 +1,28 @@
+#! /usr/bin/perl 
+##! /usr/bin/perl -w 
+#    eval 'exec /usr/bin/perl -S $0 ${1+"$@"}'
+#        if 0; #$running_under_some_shell
+# Matthijs Astley 2015
+# Script to list all files in your system with timestamps.
+
+use Data::Dumper ;
+
+$olddate = '20141216' ; 
+$date = `date '+%Y%m%d'` ;
+$find = '/usr/bin/find' ;
+$epoch = time() ;
+
+#
+# Get a list of all files in the filesystem including timestamps 
+
+@in = `find / -type f -printf "%T@ %Tc %p\n"` ;
+chomp $date ;
+$fname = "allFSfiles.$date.$epoch.out" ;
+
+
+open(FOUT, ">", "./$fname") ;
+
+foreach $file (@in){
+
+print FOUT $file ;
+}
