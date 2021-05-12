@@ -6,10 +6,10 @@
   description: |
    This script uses os.walk on a specified directory, lists the epoch timestamp and
    generates a sha256sum using the sha256 command.
-   It tags files which are not accessible by the root user with 'prblmf' found in
+   It tags files which are not accessible by the root user with 'prblmfl' found in
    directories like /proc for instance.
   
-  grade: devel # must be 'stable' to release into candidate/stable channels
+  grade: stable # must be 'stable' to release into candidate/stable channels
   confinement: devmode # use 'strict' once you have the right plugs and slots
 
   parts:
