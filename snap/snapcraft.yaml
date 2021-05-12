@@ -17,10 +17,7 @@
       # See 'snapcraft plugins'
       plugin: nil
       
-  layout:
-    /usr/bin/list-fs-files.py
-      bind: $SNAP/list-fs-files/current/snap/list-fs-files.py
-    /usr/bin/lfs_files.py
-      bind: $SNAP/list-fs-files/current/snap/lfs_files.py
-      
-  
+  #layout:
+  #  /usr/bin/list-fs-files.py
+  #    bind: $SNAP/list-fs-files/current/snap/list-fs-files.py
+ 
