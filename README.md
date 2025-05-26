@@ -1,3 +1,5 @@
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/MatthewBuchananAstley/list-fs-files/badge)](https://securityscorecards.dev/viewer/?uri=github.com/MatthewBuchananAstley/list-fs-files)
+
 # list-fs-files
 Script to list all files on a linux system with date and epoch timstamp added to each path and filename 
 
