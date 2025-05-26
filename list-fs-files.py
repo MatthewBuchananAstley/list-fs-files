@@ -198,7 +198,9 @@ if __name__ == '__main__':
                 listFsFiles.lg_funct(str(b7))
 
     elif args.f == True:
-        b7 = "LFS." + str(pth).strip("/") + ".scan_results." + listFsFiles.print_mijndate()
+        #b7 = "LFS." + str(pth).strip("/") + ".scan_results." + listFsFiles.print_mijndate()
+        b7 = "LFS" + str(pth).replace("/",'_') + ".scan_results." + listFsFiles.print_mijndate()
+        print("Ja",b7)
         b8 = [ b7, b4 ]
         listFsFiles.compZlib(b8)
 
