@@ -140,12 +140,12 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('directory')
-    parser.add_argument('-p', action='store_true', help='Print all scan results to stdout')
-    parser.add_argument('-fnf', action='store_true', help='Print filenotfound result to stdout')
-    parser.add_argument('-e', action='store_true', help='Print error result to stdout')
-    parser.add_argument('-j', action='store_true', help='Print result in json to stdout')
+    parser.add_argument('-p', action='store_true', help='Print all scan results')
+    parser.add_argument('-fnf', action='store_true', help='Print filenotfound results')
+    parser.add_argument('-e', action='store_true', help='Print error results')
+    parser.add_argument('-j', action='store_true', help='Print result in json')
     parser.add_argument('-f', action='store_true', help='Save scan results, filenotfoundlist and errorlist results' )
-    parser.add_argument('-b', action='store_true', help='List of results'  )
+    parser.add_argument('-b', action='store_true', help='Normal result listing'  )
     args = parser.parse_args()   
 
     pth = args.directory
