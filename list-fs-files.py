@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 # FileCopyrightText: 2021 - 2025 Matthew Buchanan Astley (matthewbuchanan@astley.nl,mbastley@gmail.com)
+# Version: 1.3.0
 # List files on the filesystem including stat information
 
 import os,sys
