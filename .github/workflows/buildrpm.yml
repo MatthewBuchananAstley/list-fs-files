@@ -44,6 +44,71 @@ jobs:
         with:
           spec_file: "list-fs-files.spec"
 
+      - name: Set up GPG and Sign Release Assets
+        id: sign_assets # Geef deze stap een ID om de outputs te kunnen refereren
+        run: |
+          echo "--- Installeren en Instellen van GPG ---"
+          # Installeer GPG als het nog niet aanwezig is (vaak al op ubuntu-latest)
+          sudo apt-get update && sudo apt-get install -y gnupg
+
+          # Importeren van de private GPG sleutel vanuit secret
+          echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --batch --import
+
+          # Maak een file met de passphrase aan voor GPG
+          # De passphrase file wordt na gebruik weer verwijderd
+          echo "${{ secrets.GPG_PASSPHRASE }}" > passphrase.txt
+
+          echo "--- Kopiëren van RPMs naar ${{ github.workspace }} voor Signering ---"
+          # Kopieer de Source RPM met behulp van de output van rpm_build
+          # rpm_build.outputs.source_rpm_path is al het volledige pad naar de SRPM
+          #ACTUAL_SOURCE_RPM_ORIG="find "${{ steps.rpm_build.outputs.source_rpm_path }}" -name "*.src.rpm" -print -quit"
+          ACTUAL_SOURCE_RPM_ORIG="${{ steps.rpm_build.outputs.source_rpm_path }}"
+          if [ -f "$ACTUAL_SOURCE_RPM_ORIG" ]; then
+            cp "$ACTUAL_SOURCE_RPM_ORIG" "${{ github.workspace }}/"
+            COPIED_SOURCE_RPM="${{ github.workspace }}/$(basename "$ACTUAL_SOURCE_RPM_ORIG")"
+            echo "Kopie Source RPM naar: $COPIED_SOURCE_RPM"
+          else
+            echo "Fout: Source RPM niet gevonden op '${ACTUAL_SOURCE_RPM_ORIG}'. Kan niet kopiëren of signeren."
+            exit 1 # Stop de workflow als het cruciale bestand niet gevonden wordt
+          fi
+
+          # Kopieer de Binary RPM met behulp van de output van rpm_build
+          # rpm_build.outputs.rpm_dir_path is de directory /home/runner/rpmbuild/RPMS/
+          ACTUAL_BINARY_RPM_ORIG=$(find "${{ steps.rpm_build.outputs.rpm_dir_path }}/noarch" -name "*.noarch.rpm" -print -quit)
+          if [ -f "$ACTUAL_BINARY_RPM_ORIG" ]; then
+            cp "$ACTUAL_BINARY_RPM_ORIG" "${{ github.workspace }}/"
+            COPIED_BINARY_RPM="${{ github.workspace }}/$(basename "$ACTUAL_BINARY_RPM_ORIG")"
+            echo "Kopie Binary RPM naar: $COPIED_BINARY_RPM"
+          else
+            echo "Fout: Binary RPM niet gevonden in '${{ steps.rpm_build.outputs.rpm_dir_path }}/noarch'. Kan niet kopiëren of signeren."
+            exit 1 # Stop de workflow als het cruciale bestand niet gevonden wordt
+          fi
+ 
+             # De tarball is al in ${{ github.workspace }}
+
+          echo "--- Signeren van Assets in ${{ github.workspace }} ---"
+          # Signeer de Source RPM vanuit de gekopieerde locatie
+          gpg --batch --yes --passphrase-file passphrase.txt --pinentry-mode loopback --detach-sign --armor -o "${COPIED_SOURCE_RPM}.sig" "$COPIED_SOURCE_RPM"
+          echo "SIGNED_SOURCE_RPM_SIG=${COPIED_SOURCE_RPM}.sig" >> $GITHUB_OUTPUT
+
+          # Signeer de Binary RPM vanuit de gekopieerde locatie
+          gpg --batch --yes --passphrase-file passphrase.txt --pinentry-mode loopback --detach-sign --armor -o "${COPIED_BINARY_RPM}.sig" "$COPIED_BINARY_RPM"
+          echo "SIGNED_BINARY_RPM_SIG=${COPIED_BINARY_RPM}.sig" >> $GITHUB_OUTPUT
+
+          # Signeren van de Tarball
+          TARBALL_PATH="${{ steps.create_tarball.outputs.TARBALL_PATH }}"
+          if [ -f "$TARBALL_PATH" ]; then
+            echo "Signeren van: $TARBALL_PATH"
+            gpg --batch --yes --passphrase-file passphrase.txt --pinentry-mode loopback --detach-sign --armor -o "${TARBALL_PATH}.sig" "$TARBALL_PATH"
+            echo "SIGNED_TARBALL_SIG=${TARBALL_PATH}.sig" >> $GITHUB_OUTPUT
+          else
+            echo "Waarschuwing: Geen Tarball gevonden om te signeren."
+          fi
+
+          # Verwijder de passphrase file voor de zekerheid
+          rm passphrase.txt
+        shell: bash
+
       # --- Debugging step to confirm file paths (CRITICAL for diagnosing) ---
       - name: Debug Generated Files and Paths
         if: always() # Run even if previous steps fail, for debugging
@@ -85,5 +150,10 @@ jobs:
           prerelease: false
           files: | # <--- THIS IS THE FINAL CORRECTED FILES SECTION
             ${{ steps.rpm_build.outputs.source_rpm_path }}
-            ${{ steps.rpm_build.outputs.rpm_dir_path }}/noarch/*.rpm
-            ${{ steps.create_tarball.outputs.TARBALL_PATH }}
+            ${{ github.workspace }}/*.noarch.rpm  
+            ${{ github.workspace }}/*.sig  
+            ${{ github.workspace }}/*.tar.gz  
+            ${{ steps.create_tarball.outputs.TARBALL_PATH }} # Source Tarball
+            ${{ steps.sign_assets.outputs.SIGNED_SOURCE_RPM_SIG }} # Handtekening Source RPM
+            ${{ steps.sign_assets.outputs.SIGNED_BINARY_RPM_SIG }} # Handtekening Binary RPM
+            ${{ steps.sign_assets.outputs.SIGNED_TARBALL_SIG }}   # Handtekening Source Tarball
