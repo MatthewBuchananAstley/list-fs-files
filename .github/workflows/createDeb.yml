@@ -1,0 +1,159 @@
+name: Build and Release Debian Package
+
+on:
+  push:
+    tags:
+      - 'ubuntu-v*' # Trigger ook bij tags zoals v1.0.0 (voor releases)
+  
+jobs:
+  build:
+    runs-on: ubuntu-latest # Draai de job op een standaard Ubuntu runner van GitHub Actions
+    env: # Optioneel, maar goed voor consistentie van maintainer info
+      DEBEMAIL: "ci@astley.nl" # Pas dit aan naar je e-mail
+      DEBFULLNAME: "CI Release Bot (Automated Release Signing Key)" # Pas dit aan naar je naam
+      # --- OPLOSSING VOOR KEY MISMATCH ---
+      # Stel de GPG-key ID hier in, zodat deze beschikbaar is voor de hele job,
+      # inclusief de 'Build Debian package' stap.
+      # VERVANG DIT MET DE WERKELIJKE LANGE KEY ID VAN JE 'CI Release Bot' GPG-SLEUTEL!
+      DEB_SIGN_KEYID: "5E3097F9AF5D0E9B1DB0641FB958339F1229A6EE" 
+    permissions:
+      contents: write # Permission to write releases
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4 # Haalt de code van je repository op
+
+    - name: Install build dependencies
+      run: |
+        # Werk de package list bij
+        sudo apt-get update
+        # Installeer essentiële build tools voor Debian/Ubuntu packages
+        sudo apt-get install -y debhelper devscripts build-essential gnupg 
+
+        # --- BELANGRIJK: Voeg hier de specifieke build-dependencies van jouw project toe ---
+        # Voorbeelden:
+        # Als je C/C++ code compileert: sudo apt-get install -y cmake build-essential libssl-dev
+        # Als je Python code hebt: sudo apt-get install -y python3 python3-pip
+        # Als je Node.js gebruikt: sudo apt-get install -y nodejs npm
+        # Zorg ervoor dat alle afhankelijkheden die je project nodig heeft om te compileren
+        # of te bundelen, hier worden geïnstalleerd.
+        # Bijvoorbeeld: sudo apt-get install -y libcurl4-openssl-dev zlib1g-dev
+    - name: Import GPG Key for Signing
+      run: |
+        # Creëer een directory voor de GPG-sleutelbos met de juiste permissies
+        mkdir -p ~/.gnupg
+        chmod 700 ~/.gnupg
+
+        # Importeer de privé GPG-sleutel vanuit de GitHub Secret
+        # De --batch flag voorkomt interactieve prompts
+        # --passphrase-fd 0 leest de passphrase van stdin
+        # Het geëxporteerde GPG_PRIVATE_KEY secret moet in ASCII-armor formaat zijn
+        echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --batch --import --pinentry-mode loopback
+
+        # Configureer gpg-agent om de passphrase te cachen voor de duur van de job
+        # Dit is cruciaal voor non-interactief signeren
+        echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
+         
+        # Start or restart gpg-agent to pick up new config
+        # Use --daemon to run in background
+        #gpgconf --kill gpg-agent || true # Kill if already running, ignore errors
+        #gpg-agent --daemon --pinentry-program /usr/bin/pinentry-curses # Start the agent
+
+        # Geef de passphrase door aan de gpg-agent om deze te cachen
+        #echo "${{ secrets.GPG_PASSPHRASE }}" | gpg --batch --pinentry-mode loopback --passphrase-fd 0 --yes --list-secret-keys
+
+        # Stel de GPG_TTY in, wat soms nodig is voor gpg-agent in CI-omgevingen
+        echo "GPG_TTY=$(tty)" >> $GITHUB_ENV
+        echo "${{ secrets.GPG_PASSPHRASE }}" | gpg --batch --pinentry-mode loopback \
+          --passphrase-fd 0 --yes \
+          --local-user "${{ env.DEB_SIGN_KEYID }}" \
+          --sign --clear-sign -o /dev/null -a /dev/null
+        echo "GPG passphrase successfully cached."
+
+    - name: Build Debian package
+      run: |
+        # Gebruik dpkg-buildpackage om het .deb pakket te bouwen
+        # -us: niet ondertekenen met een bronpakketsleutel (unsigned source)
+        # -uc: niet ondertekenen met een wijzigingslogsleutel (unsigned changes)
+        # Als je wel wilt signeren, heb je GPG-sleutels nodig en een complexere setup
+        #dpkg-buildpackage -us -uc
+        dpkg-buildpackage 
+      # Zorg ervoor dat dit de root van je project is, of de directory die de 'debian/' map bevat.
+      # Meestal is dit de root van de repo.
+      working-directory: ${{ github.workspace }} # De standaard werkmap van de runner
+
+    - name: Find and List .deb files
+      run: |
+        echo "Listing generated .deb files:"
+        find ${{ github.workspace }}/../ -name "*.deb" -ls
+        find ${{ github.workspace }}/../ -name "*.asc" -ls
+        find ${{ github.workspace }}/ -name "*.asc" -ls
+
+    - name: Create artifacts directory and move packages
+      run: |
+        # Maak een map voor de gegenereerde artifacts binnen de workspace
+        mkdir -p ${{ github.workspace }}/artifacts
+
+        # Verplaats alle relevante bestanden van de bovenliggende map naar de artifacts map
+        # De find commando's zijn hier relatief aan de DIR waar ze worden uitgevoerd (de root van de repo)
+        find .. -maxdepth 1 -name "*.deb" -exec mv {} ${{ github.workspace }}/artifacts/ \;
+        find .. -maxdepth 1 -name "*.dsc" -exec mv {} ${{ github.workspace }}/artifacts/ \;
+        find .. -maxdepth 1 -name "*.tar.xz" -exec mv {} ${{ github.workspace }}/artifacts/ \;
+        find .. -maxdepth 1 -name "*.buildinfo" -exec mv {} ${{ github.workspace }}/artifacts/ \;
+        find .. -maxdepth 1 -name "*.changes" -exec mv {} ${{ github.workspace }}/artifacts/ \;
+        #find .. -maxdepth 1 -name "*.asc" -exec mv {} ${{ github.workspace }}/artifacts/ \; <- dpkg-buildpackage maakt de .dsc, asc dus overbodig
+
+        echo "Moved artifacts to: ${{ github.workspace }}/artifacts/"
+        ls -l ${{ github.workspace }}/artifacts/
+
+
+    - name: Upload Debian package artifact
+      uses: actions/upload-artifact@v4 # Slaat de gegenereerde bestanden op als workflow artifact
+      with:
+        name: debian-package-artifacts # Naam van het artifact
+        path: |
+          ${{ github.workspace }}/artifacts/  
+        if-no-files-found: warn
+        compression-level: 6
+        overwrite: false
+        include-hidden-files: false
+
+    - name: Get package version (from .deb filename)
+      id: get_version # Geeft dit step een ID zodat andere steps naar de output kunnen verwijzen
+      run: |
+        # Zoek het gebouwde .deb bestand in de huidige directory
+        DEB_FILE=$(find ${{ github.workspace }}/artifacts/ -maxdepth 1 -name "*.deb" | head -n 1)
+        if [ -z "$DEB_FILE" ]; then
+          echo "No .deb file found. This is unexpected."
+          exit 1
+        fi
+        # Extraheer de versie uit de bestandsnaam.
+        # Dit patroon werkt voor de meeste Debian/Ubuntu package namen (bijv. mypackage_1.2.3-1_amd64.deb)
+        PACKAGE_VERSION=$(echo "$DEB_FILE" | sed -E 's/.*_([0-9.]+[^_]*)-[0-9]+.*\.deb/\1/')
+        echo "Detected package version: $PACKAGE_VERSION"
+        # Stel een output variabele in die door volgende stappen kan worden gebruikt
+        echo "package_version=$PACKAGE_VERSION" >> "$GITHUB_OUTPUT"
+
+    - name: Create GitHub Release (on tag push)
+      # Deze stap wordt alleen uitgevoerd als de workflow is getriggerd door een tag push
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v2 # Een populaire actie voor het maken van GitHub Releases
+      with:
+        # Voeg de artifacts toe aan de release
+        files: |
+          ${{ github.workspace }}/artifacts/*
+        name: Release ${{ steps.get_version.outputs.package_version }} # Naam van de release
+        tag_name: ${{ github.ref_name }} # Gebruik de tag naam als de release tag
+        body: |
+          Dit is een geautomatiseerde release van versie **${{ steps.get_version.outputs.package_version }}**.
+
+          **Installatie:**
+          Download het `.deb` pakket en installeer het met `sudo dpkg -i <pakketnaam>.deb`.
+
+          **Meer informatie:**
+          * Controleer de `CHANGELOG` voor gedetailleerde wijzigingen.
+          * Rapporteer problemen op [Issues](https://github.com/${{ github.repository }}/issues).
+      env:
+        # GITHUB_TOKEN is een standaard secret dat automatisch door GitHub Actions wordt geleverd
+        # Het heeft permissies om releases te maken
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
