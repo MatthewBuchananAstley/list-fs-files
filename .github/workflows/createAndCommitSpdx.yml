@@ -14,6 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write # Essentieel: geeft schrijfrechten aan de workflow
+      pull-requests: write  # Essentieel: nodig om Pull Requests te kunnen maken
 
     steps:
       - name: Checkout repository
@@ -38,9 +39,18 @@ jobs:
           # Alternatieve commit message met een dynamische datum/tijd als je wilt:
           # commit_message: "chore(sbom): Auto-generated SPDX SBOM update (${{ github.run_id }} - $(date +'%Y-%m-%d %H:%M'))"
 
-          # Dit maakt een Pull Request aan. Zorg ervoor dat 'GITHUB_TOKEN' de juiste permissies heeft (pull-requests: write)
-          create_pull_request: true
-          pull_request_title: "Automated SPDX SBOM Update"
-          pull_request_body: "This PR automatically updates the SPDX SBOM after changes detected in relevant scripts."
-          pull_request_branch: 'master' # De target branch voor de PR, meestal 'main' of 'master'
-          # pull_request_reviewers: 'your-github-username' # Optioneel: voeg reviewers toe
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }} # Gebruik het ingebouwde GitHub Token
+          commit-message: "chore(sbom): Update SPDX SBOM"
+          title: "Automated SPDX SBOM Update"
+          body: "This Pull Request automatically updates the SPDX Software Bill of Materials. Please review and merge if the changes are expected."
+          head: sbom-updates # De source branch van de PR (waar de SBOM is gecommit)
+          base: master # De target branch van de PR (meestal 'main' of 'master')
+          # Optioneel: Voeg reviewers toe
+          # reviewers: 'jouw-github-gebruikersnaam,ander-reviewer'
+          # Optioneel: Wijs de PR toe aan de gebruiker die de workflow triggert
+          # assignees: ${{ github.actor }}
+          # Optioneel: Label de PR
+          # labels: 'sbom, automated'
