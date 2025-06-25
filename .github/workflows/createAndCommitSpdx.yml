@@ -34,7 +34,7 @@ jobs:
       - name: Auto-commit SPDX SBOM to a new branch and create PR
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          branch: 'sbom-updates/auto-generated-${{ github.run_id }}' # Nieuwe branch naam
+          branch: 'sbom-updates' # Nieuwe branch naam
           commit_message: "chore(sbom): Update SPDX SBOM after change"
           # Alternatieve commit message met een dynamische datum/tijd als je wilt:
           # commit_message: "chore(sbom): Auto-generated SPDX SBOM update (${{ github.run_id }} - $(date +'%Y-%m-%d %H:%M'))"
