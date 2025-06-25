@@ -1,0 +1,19 @@
+Source: list-fs-files
+Section: utilities 
+Priority: optional
+Maintainer: Matthew Buchanan Astley <linux@astley.nl>
+Rules-Requires-Root: no
+Build-Depends:
+ debhelper-compat (= 13),
+Standards-Version: 4.6.2
+Homepage: https://github.com/MatthewBuchananAstley/list-fs-files 
+#Vcs-Browser: https://salsa.debian.org/debian/list-fs-files
+#Vcs-Git: https://salsa.debian.org/debian/list-fs-files.git
+
+Package: list-fs-files
+Architecture: any
+Multi-Arch: foreign
+Depends:
+ ${shlibs:Depends},
+ ${misc:Depends},
+Description: A python script to list files in a directory on a linux system including the stat information. 
