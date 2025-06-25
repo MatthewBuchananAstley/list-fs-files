@@ -34,7 +34,7 @@ jobs:
       - name: Auto-commit SPDX SBOM to a new branch and create PR
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          branch: 'sbom-updates' # Nieuwe branch naam
+          branch: 'the-changes' # Nieuwe branch naam
           commit_message: "chore(sbom): Update SPDX SBOM after change"
           # Alternatieve commit message met een dynamische datum/tijd als je wilt:
           # commit_message: "chore(sbom): Auto-generated SPDX SBOM update (${{ github.run_id }} - $(date +'%Y-%m-%d %H:%M'))"
@@ -46,7 +46,7 @@ jobs:
           commit-message: "chore(sbom): Update SPDX SBOM"
           title: "Automated SPDX SBOM Update"
           body: "This Pull Request automatically updates the SPDX Software Bill of Materials. Please review and merge if the changes are expected."
-          head: sbom-updates # De source branch van de PR (waar de SBOM is gecommit)
+          head: "the-changes" # De source branch van de PR (waar de SBOM is gecommit)
           base: master # De target branch van de PR (meestal 'main' of 'master')
           # Optioneel: Voeg reviewers toe
           # reviewers: 'jouw-github-gebruikersnaam,ander-reviewer'
