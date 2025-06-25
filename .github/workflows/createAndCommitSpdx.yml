@@ -1,0 +1,38 @@
+name: Auto-generate SPDX SBOM on Script Change
+
+on:
+  push:
+    branches:
+      - main # Of de branch waar je scripts op pusht, bijv. 'development'
+    paths:
+      - 'src/scripts/**.py' # Trigger als een .py-bestand in src/scripts/ wijzigt
+      - 'src/scripts/**.sh' # Trigger als een .sh-bestand in src/scripts/ wijzigt
+  workflow_dispatch: # Maakt handmatig triggeren mogelijk
+
+jobs:
+  generate_and_commit_sbom:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Essentieel: geeft schrijfrechten aan de workflow
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Syft (or your preferred SBOM tool)
+        run: |
+          # Bijvoorbeeld met Syft:
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+
+      - name: Generate SPDX SBOM
+        run: |
+          # Genereer het SPDX JSON bestand en sla het op in de root van de repository
+          # Pas 'my-project-sbom.spdx.json' aan naar een geschikte naam
+          syft . -o spdx-json > ./list-fs-files-sbom.spdx.json
+
+      - name: Auto-commit SPDX SBOM
+        uses: stefanzweifel/git-auto-commit-action@v5 # Gebruik de git-auto-commit-action
+        with:
+          commit_message: "chore(sbom): Update SPDX SBOM after change"
+          # Voeg eventueel 'file_pattern: my-project-sbom.spdx.json' toe als je alleen specifieke files wilt committen
+          # Of 'commit_options: --no-verify' als je geen hooks wilt triggeren
