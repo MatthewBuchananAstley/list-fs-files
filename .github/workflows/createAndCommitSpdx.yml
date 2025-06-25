@@ -31,7 +31,7 @@ jobs:
       - name: Generate SPDX SBOM with sbom-tool
         run: |
           #  Generate the SBOM (SPDX 2.2 JSON) and copy it to the repo root
-          sbom-tool-linux-64 generate \
+          sbom-tool-linux-x64 generate \
           -b . \
           -bc . \
           -pn "list-fs-files" \
