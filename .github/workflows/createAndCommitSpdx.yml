@@ -3,10 +3,10 @@ name: Auto-generate SPDX SBOM on Script Change
 on:
   push:
     branches:
-      - main # Of de branch waar je scripts op pusht, bijv. 'development'
-    paths:
-      - 'src/scripts/**.py' # Trigger als een .py-bestand in src/scripts/ wijzigt
-      - 'src/scripts/**.sh' # Trigger als een .sh-bestand in src/scripts/ wijzigt
+      - master # Of de branch waar je scripts op pusht, bijv. 'development'
+    #paths:
+    #  - '**.py' # Trigger als een .py-bestand in wijzigt
+      
   workflow_dispatch: # Maakt handmatig triggeren mogelijk
 
 jobs:
