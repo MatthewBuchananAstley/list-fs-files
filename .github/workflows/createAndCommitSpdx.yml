@@ -24,15 +24,14 @@ jobs:
       - name: Install sbom-tool
         run: |
           # Download the latest sbom-tool release (Linux x64 example)
-          curl -L -o sbom-tool.zip https://github.com/microsoft/sbom-tool/releases/latest/download/sbom-tool-linux-x64.zip
-          unzip sbom-tool.zip -d sbom-tool-bin
-          chmod +x sbom-tool-bin/sbom-tool
-          sudo mv sbom-tool-bin/sbom-tool /usr/local/bin/sbom-tool
+          curl -L -o sbom-tool.zip https://github.com/microsoft/sbom-tool/releases/download/v4.0.3/sbom-tool-linux-x64 
+          #unzip sbom-tool.zip -d sbom-tool-bin
+          chmod +x sbom-tool-linux-x64
 
       - name: Generate SPDX SBOM with sbom-tool
         run: |
           #  Generate the SBOM (SPDX 2.2 JSON) and copy it to the repo root
-          sbom-tool generate \
+          sbom-tool-linux-64 generate \
           -b . \
           -bc . \
           -pn "list-fs-files" \
