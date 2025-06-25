@@ -1,0 +1,14 @@
+# Uitvoerbaar programma
+list-fs-files usr/bin/
+
+# Documentatie
+# Deze bestanden worden geïnstalleerd in /usr/share/doc/<pakketnaam>/
+CHANGELOG.md usr/share/doc/list-fs-files/
+CONTRIBUTING.md usr/share/doc/list-fs-files/
+COPYRIGHT.md usr/share/doc/list-fs-files/
+LICENSE.md usr/share/doc/list-fs-files/
+README.md usr/share/doc/list-fs-files/
+SECURITY.md usr/share/doc/list-fs-files/
+
+# Publieke GPG-sleutel voor verificatie (bij documentatie)
+Automated_Release_Signing_Key.pub usr/share/doc/list-fs-files/
