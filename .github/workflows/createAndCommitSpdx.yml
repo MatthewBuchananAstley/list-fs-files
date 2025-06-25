@@ -30,9 +30,17 @@ jobs:
           # Pas 'my-project-sbom.spdx.json' aan naar een geschikte naam
           syft . -o spdx-json > ./list-fs-files-sbom.spdx.json
 
-      - name: Auto-commit SPDX SBOM
-        uses: stefanzweifel/git-auto-commit-action@v5 # Gebruik de git-auto-commit-action
+      - name: Auto-commit SPDX SBOM to a new branch and create PR
+        uses: stefanzweifel/git-auto-commit-action@v5
         with:
+          branch: 'sbom-updates/auto-generated-${{ github.run_id }}' # Nieuwe branch naam
           commit_message: "chore(sbom): Update SPDX SBOM after change"
-          # Voeg eventueel 'file_pattern: my-project-sbom.spdx.json' toe als je alleen specifieke files wilt committen
-          # Of 'commit_options: --no-verify' als je geen hooks wilt triggeren
+          # Alternatieve commit message met een dynamische datum/tijd als je wilt:
+          # commit_message: "chore(sbom): Auto-generated SPDX SBOM update (${{ github.run_id }} - $(date +'%Y-%m-%d %H:%M'))"
+
+          # Dit maakt een Pull Request aan. Zorg ervoor dat 'GITHUB_TOKEN' de juiste permissies heeft (pull-requests: write)
+          create_pull_request: true
+          pull_request_title: "Automated SPDX SBOM Update"
+          pull_request_body: "This PR automatically updates the SPDX SBOM after changes detected in relevant scripts."
+          pull_request_branch: 'master' # De target branch voor de PR, meestal 'main' of 'master'
+          # pull_request_reviewers: 'your-github-username' # Optioneel: voeg reviewers toe
