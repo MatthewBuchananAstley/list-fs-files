@@ -30,7 +30,7 @@ jobs:
         run: |
           # Genereer het SPDX JSON bestand en sla het op in de root van de repository
           # Pas 'my-project-sbom.spdx.json' aan naar een geschikte naam
-          syft . -o spdx-json > ./list-fs-files-sbom.spdx.json
+          syft . --scope all-layers --file-cataloger -o spdx-json > ./list-fs-files-sbom.spdx.json
 
       - name: Auto-commit SPDX SBOM to a new branch and create PR
         uses: stefanzweifel/git-auto-commit-action@v5
