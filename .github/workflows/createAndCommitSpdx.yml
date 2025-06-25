@@ -4,8 +4,8 @@ on:
   push:
     branches:
       - master # Of de branch waar je scripts op pusht, bijv. 'development'
-    #paths:
-    #  - '**.py' # Trigger als een .py-bestand in wijzigt
+    paths:
+      - 'list-fs-files*' # Trigger als een .py-bestand in wijzigt
       
   workflow_dispatch: # Maakt handmatig triggeren mogelijk
 
