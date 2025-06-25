@@ -24,7 +24,7 @@ jobs:
       - name: Install sbom-tool
         run: |
           # Download the latest sbom-tool release (Linux x64 example)
-          curl -L -o sbom-tool.zip https://github.com/microsoft/sbom-tool/releases/download/v4.0.3/sbom-tool-linux-x64 
+          curl -L -O https://github.com/microsoft/sbom-tool/releases/download/v4.0.3/sbom-tool-linux-x64 
           #unzip sbom-tool.zip -d sbom-tool-bin
           chmod +x sbom-tool-linux-x64
 
