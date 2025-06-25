@@ -27,6 +27,7 @@ jobs:
           curl -L -O https://github.com/microsoft/sbom-tool/releases/download/v4.0.3/sbom-tool-linux-x64 
           #unzip sbom-tool.zip -d sbom-tool-bin
           chmod +x sbom-tool-linux-x64
+          sudo mv sbom-tool-linux-x64 /usr/local/bin/ 
 
       - name: Generate SPDX SBOM with sbom-tool
         run: |
