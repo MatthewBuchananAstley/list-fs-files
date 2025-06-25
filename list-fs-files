@@ -3,7 +3,8 @@
 # FileCopyrightText: 2021 - 2025 Matthew Buchanan Astley (linux@astley.nl,matthewbuchanan@astley.nl,mbastley@gmail.com)
 # SPDX-License-Identifier: Apache-2.0
 # Version: 1.3.0
-# List files on the filesystem including stat information, option to save results to an archive.
+# List files on the filesystem including stat information. It has an option to save results to an archive, list errors and files not found,
+# a summary of the number of files. 
 
 import os,sys
 import hashlib
