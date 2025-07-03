@@ -41,7 +41,7 @@ jobs:
           -nsb "https://github.com/MatthewBuchananAstley/list-fs-files"
 
       - name: Auto-commit SPDX SBOM to a new branch and create PR
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@v6
         with:
           branch: 'the-changes' # Nieuwe branch naam
           commit_message: "chore(sbom): Update SPDX SBOM after change"
