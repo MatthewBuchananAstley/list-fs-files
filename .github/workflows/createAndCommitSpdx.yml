@@ -13,8 +13,8 @@ on:
 jobs:
   generate_and_commit_sbom:
     runs-on: ubuntu-latest
-    env:
-      DeleteManifestDirIfPresent: 'true'
+    #env:
+    #  DeleteManifestDirIfPresent: 'true'
     permissions:
       contents: write # Essentieel: geeft schrijfrechten aan de workflow
       pull-requests: write  # Essentieel: nodig om Pull Requests te kunnen maken
