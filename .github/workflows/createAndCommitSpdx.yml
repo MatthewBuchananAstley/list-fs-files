@@ -25,6 +25,9 @@ jobs:
 
       - name: Debug Check Line Endings of Repository Files on Runner
         run: |
+          git config --global core.autocrlf false
+          git config --global core.eol lf
+
           echo "--- Git core.autocrlf and core.eol settings on this runner ---"
           git config core.autocrlf
           git config core.eol
