@@ -53,7 +53,10 @@ jobs:
               echo "SBOM JSON not yet generated or found in expected path."
           fi
           echo "---------------------------------------------------------"
-
+      
+      - name: Hexdump COPYRIGHT.md
+        run: hexdump -C COPYRIGHT.md | tail
+        
       - name: Install sbom-tool
         run: |
           # Download the latest sbom-tool release (Linux x64 example)
