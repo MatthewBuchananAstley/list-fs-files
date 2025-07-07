@@ -23,6 +23,34 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Debug Check Line Endings of Repository Files on Runner
+        run: |
+          echo "--- Git core.autocrlf and core.eol settings on this runner ---"
+          git config core.autocrlf
+          git config core.eol
+          echo "---------------------------------------------------------"
+
+          echo "--- Inspection of .md file line endings (first few lines) ---"
+          find . -type f -name "*.md" -print0 | while IFS= read -r -d $'\0' file; do
+              echo "File: $file"
+              head -n 5 "$file" | cat -v # Use cat -v to show non-printable chars like ^M
+              echo "---"
+          done
+          echo "---------------------------------------------------------"
+
+          echo "--- SHA256 of MD files as seen by the runner after checkout ---"
+          find . -type f -name "*.md" -exec sha256sum {} +
+          echo "---------------------------------------------------------"
+
+          echo "--- Inspection of SBOM JSON file line endings (first few lines) ---"
+          if [ -f "_manifest/spdx_2.2/manifest.spdx.json" ]; then
+              echo "File: _manifest/spdx_2.2/manifest.spdx.json"
+              head -n 5 "_manifest/spdx_2.2/manifest.spdx.json" | cat -v
+          else
+              echo "SBOM JSON not yet generated or found in expected path."
+          fi
+          echo "---------------------------------------------------------"
+
       - name: Install sbom-tool
         run: |
           # Download the latest sbom-tool release (Linux x64 example)
