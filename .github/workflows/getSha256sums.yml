@@ -1,0 +1,89 @@
+name: Generate SHA256 sums of package files
+
+on:
+  push:
+    tags:
+      - 'sha256sums-v*'  # Trigger only on version tags, e.g., v1.0.0
+  workflow_dispatch: # Allows manual triggering
+
+permissions:
+  contents: write  # Required for creating releases and uploading assets
+
+jobs:
+  generate-shasums:
+    name: Generate sha256sums for Fedora and Ubuntu packages
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install required tools
+        run: |
+          sudo apt update
+          sudo apt install -y dpkg-dev dpkg rpm2cpio cpio curl jq
+
+      - name: Fetch latest Fedora package URLs
+        id: fedora-urls
+        run: |
+          FEDORA_REPO="https://dl.fedoraproject.org/pub/fedora/linux/releases"
+          LATEST=$(curl -s "$FEDORA_REPO/" | grep -oP 'href="\K[0-9]+(?=/")' | sort -n | tail -1)
+          BASE_URL="https://dl.fedoraproject.org/pub/fedora/linux/releases/$LATEST/Everything/x86_64/os/Packages"
+
+          COREUTILS_URL=$(curl -s "$BASE_URL/c/" | grep -oP 'href="coreutils-[^"]+\.rpm"' | cut -d'"' -f2 | sort | tail -1)
+          PYTHON3_URL=$(curl -s "$BASE_URL/p/" | grep -oP 'href="python3-libs-[^"]+\.rpm"' | cut -d'"' -f2 | sort | tail -1)
+
+          echo "coreutils_url=$BASE_URL/c/$COREUTILS_URL" >> "$GITHUB_OUTPUT"
+          echo "python3libs_url=$BASE_URL/p/$PYTHON3_URL" >> "$GITHUB_OUTPUT"
+
+      - name: Download Fedora RPMs
+        run: |
+          mkdir -p fedora
+          curl -L -o fedora/coreutils.rpm "${{ steps.fedora-urls.outputs.coreutils_url }}"
+          curl -L -o fedora/python3-libs.rpm "${{ steps.fedora-urls.outputs.python3libs_url }}"
+
+      - name: Extract Fedora RPM contents
+        run: |
+          mkdir -p extracted/fedora
+          for rpm in fedora/*.rpm; do
+            rpm2cpio "$rpm" | cpio -idmv -D extracted/fedora
+          done
+
+      - name: Generate Fedora sha256sums
+        run: |
+          cd extracted/fedora
+          find . -type f -exec sha256sum {} + | sort > ../../sha256sums-fedora.txt
+
+      - name: Download Ubuntu packages
+        run: |
+          mkdir -p ubuntu
+          apt download coreutils python3
+          mv *.deb ubuntu/
+
+      - name: Extract Ubuntu DEB contents
+        run: |
+          mkdir -p extracted/ubuntu
+          for deb in ubuntu/*.deb; do
+            dpkg-deb -x "$deb" extracted/ubuntu
+          done
+
+      - name: Generate Ubuntu sha256sums
+        run: |
+          cd extracted/ubuntu
+          find . -type f -exec sha256sum {} + | sort > ../../sha256sums-ubuntu.txt
+
+      - name: Verify Ubuntu sha256sums
+        run: |
+          cd extracted/ubuntu
+          sha256sum -c ../../sha256sums-ubuntu.txt
+
+      - name: Upload checksums to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Release ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+          files: |
+            sha256sums-fedora.txt
+            sha256sums-ubuntu.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
