@@ -1,12 +1,12 @@
 name: Auto-generate SPDX SBOM on Script Change
 
 on:
-  push:
-    branches:
-      - master # Of de branch waar je scripts op pusht, bijv. 'development'
-    paths:
-      - 'list-fs-files' # Trigger als het list-fs-files bestand wijzigt 
-      - 'list-fs-files.spec' # Trigger als het list-fs-files bestand wijzigt 
+#  push:
+#    branches:
+#      - master # Of de branch waar je scripts op pusht, bijv. 'development'
+#    paths:
+#      - 'list-fs-files' # Trigger als het list-fs-files bestand wijzigt 
+#      - 'list-fs-files.spec' # Trigger als het list-fs-files bestand wijzigt 
       
   workflow_dispatch: # Maakt handmatig triggeren mogelijk
 
