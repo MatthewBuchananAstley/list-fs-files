@@ -33,33 +33,26 @@ jobs:
         with:
           cosign-release: 'v2.2.0'
 
-      - name: Download and Install Trivy
-        run: |
-          # Download the latest Trivy release binary
-          # Replace '0.50.0' with the latest stable version if needed, check Trivy releases on GitHub.
-          TRIVY_VERSION="0.50.0" # Or specify latest: $(curl -s "https://api.github.com/repos/aquasecurity/trivy/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
-          wget https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.deb
-          sudo dpkg -i trivy_${TRIVY_VERSION}_Linux-64bit.deb
 
-      - name: Generate Trivy Attestation for SBOM and Sign with Cosign
+      - name: Create SBOM Attestation and Sign with Cosign
         run: |
           # Calculate the SHA256 sum of the SBOM file.
-          # This digest will be the *target* artifact for the Cosign attestation.
+          # This digest will be the *target artifact* for the Cosign attestation in Rekor.
+          # The attestation itself will confirm that this digest is an SBOM.
           SBOM_DIGEST=$(sha256sum list-fs-files.spdx.json | awk '{print $1}')
-          
-          # Generate the attestation using Trivy.
-          # The SBOM file (list-fs-files.spdx.json) is the *subject* of this attestation.
-          # Trivy will automatically create a predicate related to this subject.
-          trivy attestation write \
-            --output list-fs-files.spdx.attestation.json \
-            list-fs-files.spdx.json # This is the file being attested (the subject)
 
-          # Sign the generated attestation using cosign.
-          # The target of the signature/attestation in Rekor will be the SBOM_DIGEST.
+          # Cosign can directly attest to the SBOM file.
+          # The --predicate flag points to the content that *is* the attestation (in this case, your SBOM).
+          # The --type in-toto ensures it's wrapped in an in-toto attestation format.
+          # The "sha256:${SBOM_DIGEST}" is the subject (the artifact being attested) that Cosign binds to in Rekor.
           cosign attest --yes \
-            --predicate list-fs-files.spdx.attestation.json \
-            --type in-toto \
+            --predicate list-fs-files.spdx.json \
+            --type spdx \
             "sha256:${SBOM_DIGEST}"
+            # Note: --type spdx is often used directly for SPDX predicates.
+            # If it causes issues, you can try --type in-toto, but SPDX is more specific.
+
+          echo "Attestation created and signed for SBOM digest: ${SBOM_DIGEST}"
 
       - name: Verify Trivy Attestation with Cosign
         run: |
