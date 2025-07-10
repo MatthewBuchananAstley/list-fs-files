@@ -34,26 +34,51 @@ jobs:
           cosign-release: 'v2.2.0'
 
 
-      - name: Create SBOM Attestation and Sign with Cosign
+      - name: Sign SBOM File (as a blob) and Attach Attestation with Cosign
         run: |
           # Calculate the SHA256 sum of the SBOM file.
-          # This digest will be the *target artifact* for the Cosign attestation in Rekor.
-          # The attestation itself will confirm that this digest is an SBOM.
+          # This digest will be the *subject* artifact for the Cosign blob signature and attestation in Rekor.
           SBOM_DIGEST=$(sha256sum list-fs-files.spdx.json | awk '{print $1}')
 
-          # Cosign can directly attest to the SBOM file.
-          # The --predicate flag points to the content that *is* the attestation (in this case, your SBOM).
-          # The --type in-toto ensures it's wrapped in an in-toto attestation format.
-          # The "sha256:${SBOM_DIGEST}" is the subject (the artifact being attested) that Cosign binds to in Rekor.
-          cosign attest --yes \
-            --predicate list-fs-files.spdx.json \
-            --type spdx \
+          # Step 1: Sign the SBOM file as a blob.
+          # This creates a signature for the file itself and logs it in Rekor.
+          # The output is the entry ID in Rekor.
+          echo "Signing SBOM blob: list-fs-files.spdx.json"
+          SIGNATURE_LOG_ENTRY=$(cosign sign-blob --yes list-fs-files.spdx.json | grep -oP 'Log Entry: \K[0-9a-f]+')
+          echo "SBOM blob signed, Rekor log entry: ${SIGNATURE_LOG_ENTRY}"
+
+          # Step 2: Create a simple in-toto attestation JSON.
+          # Cosign's 'attest' for images automatically generates an in-toto envelope.
+          # For blobs, we need to provide the in-toto JSON ourselves.
+          # This example creates a minimal in-toto attestation that simply states
+          # the predicate type is SPDX, and the subject is the SBOM itself.
+          cat << EOF > list-fs-files.spdx.in-toto.json
+{
+  "_type": "https://in-toto.io/Statement/v0.1",
+  "predicateType": "https://spdx.github.io/spdx-spec/2.2.2/Software-Bill-Of-Materials",
+  "subject": [
+    {
+      "name": "list-fs-files.spdx.json",
+      "digest": {
+        "sha256": "${SBOM_DIGEST}"
+      }
+    }
+  ],
+  "predicate": {}
+}
+EOF
+
+          # Step 3: Attach the in-toto attestation to the *signed blob's digest*.
+          # We use 'cosign attach attestation' and refer to the same digest as the subject.
+          echo "Attaching in-toto attestation to SBOM blob digest: sha256:${SBOM_DIGEST}"
+          cosign attach attestation \
+            --predicate list-fs-files.spdx.in-toto.json \
             "sha256:${SBOM_DIGEST}"
-            # Note: --type spdx is often used directly for SPDX predicates.
-            # If it causes issues, you can try --type in-toto, but SPDX is more specific.
+            # This attaches the attestation to the blob identified by its digest in Rekor.
 
           echo "Attestation created and signed for SBOM digest: ${SBOM_DIGEST}"
 
+          
       - name: Verify Trivy Attestation with Cosign
         run: |
           SBOM_DIGEST=$(sha256sum list-fs-files.spdx.json | awk '{print $1}')
