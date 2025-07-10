@@ -50,7 +50,7 @@ jobs:
           go-version: '1.22'
 
       - name: Install protobomit
-        run: go get github.com/testifysec/protobomit
+        run: go install github.com/in-toto/go-in-toto/protobomit/cmd/protobomit@latest
 
       - name: Setup Cosign
         uses: sigstore/cosign-installer@v3.5.0
