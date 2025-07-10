@@ -46,14 +46,13 @@ jobs:
           # Calculate the SHA256 sum of the SBOM file.
           # This digest will be the *target* artifact for the Cosign attestation.
           SBOM_DIGEST=$(sha256sum list-fs-files.spdx.json | awk '{print $1}')
-
-          # Generate the attestation using Trivy's "attest" command.
-          # This creates an in-toto attestation JSON that wraps your SBOM.
-          # We specify the SBOM file as the artifact being attested.
+          
+          # Generate the attestation using Trivy.
+          # The SBOM file (list-fs-files.spdx.json) is the *subject* of this attestation.
+          # Trivy will automatically create a predicate related to this subject.
           trivy attestation write \
-            --artifact list-fs-files.spdx.json \
-            --predicate list-fs-files.spdx.attestation.json \
-            --predicate-type "https://spdx.github.io/spdx-spec/2.2.2/Software-Bill-Of-Materials"
+            --output list-fs-files.spdx.attestation.json \
+            list-fs-files.spdx.json # This is the file being attested (the subject)
 
           # Sign the generated attestation using cosign.
           # The target of the signature/attestation in Rekor will be the SBOM_DIGEST.
