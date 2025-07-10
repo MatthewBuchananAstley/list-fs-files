@@ -62,8 +62,6 @@ jobs:
             --type in-toto \
             "sha256:${SBOM_DIGEST}"
 
----
-
       - name: Verify Trivy Attestation with Cosign
         run: |
           SBOM_DIGEST=$(sha256sum list-fs-files.spdx.json | awk '{print $1}')
@@ -75,8 +73,6 @@ jobs:
             --predicate list-fs-files.spdx.json # Verify the original SBOM file against the attestation retrieved from Rekor
 
           echo "Attestation verified successfully!"
-
----
 
       - name: Auto-commit SPDX SBOM
         uses: stefanzweifel/git-auto-commit-action@v6
