@@ -28,17 +28,18 @@ jobs:
             exit 1
           fi
 
-      - name: Setup Trivy
-        uses: aquasecurity/trivy-action@master
-        with:
-          # Trivy will be installed by this action
-          # You can specify a version if needed, e.g., version: '0.49.1'
-          install-only: true # Only install Trivy, don't run a scan yet
-
       - name: Setup Cosign
         uses: sigstore/cosign-installer@v3.5.0
         with:
           cosign-release: 'v2.2.0'
+
+      - name: Download and Install Trivy
+        run: |
+          # Download the latest Trivy release binary
+          # Replace '0.50.0' with the latest stable version if needed, check Trivy releases on GitHub.
+          TRIVY_VERSION="0.50.0" # Or specify latest: $(curl -s "https://api.github.com/repos/aquasecurity/trivy/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
+          wget https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.deb
+          sudo dpkg -i trivy_${TRIVY_VERSION}_Linux-64bit.deb
 
       - name: Generate Trivy Attestation for SBOM and Sign with Cosign
         run: |
