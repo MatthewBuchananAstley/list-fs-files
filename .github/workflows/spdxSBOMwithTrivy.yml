@@ -47,26 +47,30 @@ jobs:
           SIGNATURE_LOG_ENTRY=$(cosign sign-blob --yes list-fs-files.spdx.json | grep -oP 'Log Entry: \K[0-9a-f]+')
           echo "SBOM blob signed, Rekor log entry: ${SIGNATURE_LOG_ENTRY}"
 
-          # Step 2: Create a simple in-toto attestation JSON.
-          # Cosign's 'attest' for images automatically generates an in-toto envelope.
-          # For blobs, we need to provide the in-toto JSON ourselves.
-          # This example creates a minimal in-toto attestation that simply states
-          # the predicate type is SPDX, and the subject is the SBOM itself.
-          cat << EOF > list-fs-files.spdx.in-toto.json
-{
-  "_type": "https://in-toto.io/Statement/v0.1",
-  "predicateType": "https://spdx.github.io/spdx-spec/2.2.2/Software-Bill-Of-Materials",
-  "subject": [
-    {
-      "name": "list-fs-files.spdx.json",
-      "digest": {
-        "sha256": "${SBOM_DIGEST}"
-      }
-    }
-  ],
-  "predicate": {}
-}
-EOF
+          
+          # Step 2: Create a simple in-toto attestation JSON using jq for robustness.
+          # We're building the JSON object directly with 'jq'.
+          # This avoids common heredoc indentation issues and is safer for JSON.
+          jq -n \
+            --arg name "list-fs-files.spdx.json" \
+            --arg digest_sha256 "${SBOM_DIGEST}" \
+            '{
+              "_type": "https://in-toto.io/Statement/v0.1",
+              "predicateType": "https://spdx.github.io/spdx-spec/2.2.2/Software-Bill-Of-Materials",
+              "subject": [
+                {
+                  "name": $name,
+                  "digest": {
+                    "sha256": $digest_sha256
+                  }
+                }
+              ],
+              "predicate": {}
+            }' > list-fs-files.spdx.in-toto.json
+
+          # Verify the generated JSON
+          echo "Generated in-toto attestation JSON:"
+          cat list-fs-files.spdx.in-toto.json
 
           # Step 3: Attach the in-toto attestation to the *signed blob's digest*.
           # We use 'cosign attach attestation' and refer to the same digest as the subject.
