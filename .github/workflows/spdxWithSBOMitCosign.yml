@@ -26,9 +26,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install Kubernetes bom tool
-        uses: puerco/bom-installer@v0.3.0 # Using a stable version, check https://github.com/puerco/bom-installer for latest
-        with:
-          bom-release: 'v0.3.0' # Match the version of the action
+        uses: puerco/release-actions/setup-bom@main # Using a stable version, check https://github.com/puerco/bom-installer for latest
+        #with:
+        #  bom-release: 'v0.3.0' # Match the version of the actionw
 
       - name: Generate SPDX SBOM with bom
         id: generate_sbom
