@@ -61,8 +61,8 @@ jobs:
 
           mkdir -p fedora-base
           echo "Checking packages retrieval:"
-          echo "$BASE_URL/c/$(curl -s $BASE_URL/c/ | grep -oP 'coreutils-[^"]+\.rpm' | sort | tail -1)"
-          echo "$BASE_URL/p/$(curl -s $BASE_URL/p/ | grep -oP 'python3-libs-[^"]+\.rpm' | sort | tail -1)"
+          echo "$BASE_URL/c/$(curl -s $BASE_URL/c/ | grep -oP 'coreutils-[^"]+\.rpm' | sort )"
+          echo "$BASE_URL/p/$(curl -s $BASE_URL/p/ | grep -oP 'python3-libs-[^"]+\.rpm' | sort )"
           echo "----------"
           curl -L -o fedora-base/coreutils.rpm "$BASE_URL/c/$(curl -s $BASE_URL/c/ | grep -oP 'coreutils-[^"]+\.rpm' | sort | tail -1)"
           curl -L -o fedora-base/python3-libs.rpm "$BASE_URL/p/$(curl -s $BASE_URL/p/ | grep -oP 'python3-libs-[^"]+\.rpm' | sort | tail -1)"
@@ -74,6 +74,10 @@ jobs:
           UPDATES_URL="https://dl.fedoraproject.org/pub/fedora/linux/updates/$VERSION/Everything/x86_64/Packages"
 
           mkdir -p fedora-updates
+          echo "Checking update packages retrieval:"
+          echo "$UPDATES_URL/c/$(curl -s $UPDATES_URL/c/ | grep -oP 'coreutils-[^"]+\.rpm' | sort )"
+          echo "$UPDATES_URL/p/$(curl -s $UPDATES_URL/p/ | grep -oP 'python3-libs-[^"]+\.rpm' | sort )"
+          echo "----------"
           curl -L -o fedora-updates/coreutils.rpm "$UPDATES_URL/c/$(curl -s $UPDATES_URL/c/ | grep -oP 'coreutils-[^"]+\.rpm' | sort | tail -1)"
           curl -L -o fedora-updates/python3-libs.rpm "$UPDATES_URL/p/$(curl -s $UPDATES_URL/p/ | grep -oP 'python3-libs-[^"]+\.rpm' | sort | tail -1)"
 
