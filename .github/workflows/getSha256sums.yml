@@ -60,6 +60,10 @@ jobs:
           BASE_URL="https://dl.fedoraproject.org/pub/fedora/linux/releases/$VERSION/Everything/x86_64/os/Packages"
 
           mkdir -p fedora-base
+          echo "Checking packages retrieval:"
+          echo "$BASE_URL/c/$(curl -s $BASE_URL/c/ | grep -oP 'coreutils-[^"]+\.rpm' | sort | tail -1)"
+          echo "$BASE_URL/p/$(curl -s $BASE_URL/p/ | grep -oP 'python3-libs-[^"]+\.rpm' | sort | tail -1)"
+          echo "----------"
           curl -L -o fedora-base/coreutils.rpm "$BASE_URL/c/$(curl -s $BASE_URL/c/ | grep -oP 'coreutils-[^"]+\.rpm' | sort | tail -1)"
           curl -L -o fedora-base/python3-libs.rpm "$BASE_URL/p/$(curl -s $BASE_URL/p/ | grep -oP 'python3-libs-[^"]+\.rpm' | sort | tail -1)"
 
