@@ -21,13 +21,20 @@ jobs:
       - name: Install required tools
         run: |
           sudo apt update
-          sudo apt install -y dpkg-dev dpkg rpm2cpio cpio curl jq
+          sudo apt install -y dpkg-dev dpkg rpm2cpio cpio curl jq wget
 
       - name: Download Ubuntu packages
         run: |
+          PACKAGE_URL=$(wget -qO- http://archive.ubuntu.com/ubuntu/dists/noble/main/binary-amd64/Packages.gz \
+            | gunzip \
+            | awk '/^Package: libpython*.*-stdlib$/,/^$/' \
+            | grep Filename | awk '{print $2}'|tail -1)
+          echo "PACKAGE_URL=$PACKAGE_URL" >> $GITHUB_ENV
+          wget http://archive.ubuntu.com/ubuntu/$PACKAGE_URL -O libpython-stdlib.deb
           mkdir -p ubuntu
-          apt download coreutils python3
+          apt download coreutils
           mv *.deb ubuntu/
+          ls -la ubuntu/
 
       - name: Extract Ubuntu DEB contents
         run: |
