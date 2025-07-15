@@ -38,7 +38,7 @@ jobs:
           echo "PACKAGE_URL=$PACKAGE_URL" >> $GITHUB_ENV
           wget http://archive.ubuntu.com/ubuntu/$PACKAGE_URL -O libpython-stdlib.deb
           mkdir -p ubuntu
-          apt download coreutils
+          apt download coreutils libpython3.12-minimal
           mv *.deb ubuntu/
           ls -la ubuntu/
 
