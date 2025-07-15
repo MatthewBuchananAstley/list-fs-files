@@ -22,8 +22,12 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y dpkg-dev dpkg rpm2cpio cpio curl jq wget
+
+      - name: Find python3 stdlib package
+        run: |
           # Checking which package installs the python stdlibs
-          find /usr/lib/python3 -name "random.py" -exec dpkg -S {} \; 
+          ls -la /usr/lib/python*
+          find /usr/lib/ -name "random.py" -exec dpkg -S {} \; 
 
       - name: Download Ubuntu packages
         run: |
