@@ -21,7 +21,7 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4 # Haalt de code van je repository op
+      uses: actions/checkout@v5 # Haalt de code van je repository op
 
     - name: Install build dependencies
       run: |
