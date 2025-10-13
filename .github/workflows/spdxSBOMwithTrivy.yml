@@ -96,7 +96,7 @@ jobs:
           echo "Attestation verified successfully!"
 
       - name: Auto-commit SPDX SBOM
-        uses: stefanzweifel/git-auto-commit-action@v6
+        uses: stefanzweifel/git-auto-commit-action@v7
         with:
           branch: 'the-changes'
           commit_message: "chore(sbom): Update SPDX SBOM after change"
